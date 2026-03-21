@@ -64,4 +64,5 @@ jobs:
               docker rm user-service || true
               docker run -d -p 8080:8080 --name user-service --restart always \
                 -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+                -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
                 ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
