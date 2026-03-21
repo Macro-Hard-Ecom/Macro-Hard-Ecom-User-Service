@@ -57,15 +57,19 @@ jobs:
             host: ${{ secrets.EC2_HOST }}
             username: ec2-user
             key: ${{ secrets.EC2_SSH_KEY }}
+            envs: DB_URL,DB_DRIVER,DB_USERNAME,DB_PASSWORD,JWT_SECRET,AWS_REGION,AWS_ACCOUNT_ID,ECR_REPOSITORY
             script: |
               aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
               docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
               docker stop user-service || true
               docker rm user-service || true
+              cat > /home/ec2-user/user-service.env << EOF
+              DB_URL=${{ secrets.DB_URL }}
+              DB_DRIVER=${{ secrets.DB_DRIVER }}
+              DB_USERNAME=${{ secrets.DB_USERNAME }}
+              DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+              JWT_SECRET=${{ secrets.JWT_SECRET }}
+              EOF
               docker run -d -p 8080:8080 --name user-service --restart always \
-                -e DB_URL=${{ secrets.DB_URL }} \
-                -e DB_DRIVER=${{ secrets.DB_DRIVER }} \
-                -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
-                -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-                -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+                --env-file /home/ec2-user/user-service.env \
                 ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
