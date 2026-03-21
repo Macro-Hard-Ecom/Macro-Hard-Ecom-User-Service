@@ -28,6 +28,9 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<sonar.organization>macro-hard-ecom</sonar.organization>
+		<sonar.projectKey>Macro-Hard-Ecom_Macro-Hard-Ecom-User-Service</sonar.projectKey>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 	</properties>
 	<dependencies>
 		<dependency>

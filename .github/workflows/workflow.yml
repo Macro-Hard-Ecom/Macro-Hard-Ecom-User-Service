@@ -23,6 +23,11 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
+      - name: SonarCloud scan
+        env:
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn sonar:sonar -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
