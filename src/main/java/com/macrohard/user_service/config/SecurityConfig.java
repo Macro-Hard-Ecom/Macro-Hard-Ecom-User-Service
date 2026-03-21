@@ -34,6 +34,7 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/api-docs/**",
                                 "/swagger-ui.html",
+                                "/api/health",
                                 "/error").permitAll()
                         .anyRequest().authenticated())
                 .headers(headers -> headers
