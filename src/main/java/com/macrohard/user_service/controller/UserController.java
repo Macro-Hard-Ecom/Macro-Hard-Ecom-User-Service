@@ -39,5 +39,10 @@ public class UserController {
         return ResponseEntity.ok(userService.validateToken(token));
     }
 
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("User Service is running");
+    }
+
 }
 
