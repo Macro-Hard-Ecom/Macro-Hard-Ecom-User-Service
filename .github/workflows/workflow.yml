@@ -25,13 +25,9 @@ jobs:
 
       - name: SonarCloud scan
         env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn sonar:sonar
-          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-          -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-          -Dsonar.host.url=https://sonarcloud.io
-          -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn sonar:sonar -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -49,28 +45,32 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
           IMAGE_TAG: ${{ github.sha }}
-        run: mvn sonar:sonar -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
         with:
-            host: ${{ secrets.EC2_HOST }}
-            username: ec2-user
-            key: ${{ secrets.EC2_SSH_KEY }}
-            envs: DB_URL,DB_DRIVER,DB_USERNAME,DB_PASSWORD,JWT_SECRET,AWS_REGION,AWS_ACCOUNT_ID,ECR_REPOSITORY
-            script: |
-              aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
-              docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
-              docker stop user-service || true
-              docker rm user-service || true
-              cat > /home/ec2-user/user-service.env << EOF
-              SPRING_DATASOURCE_URL=${{ secrets.DB_URL }}
-              SPRING_DATASOURCE_DRIVER_CLASS_NAME=${{ secrets.DB_DRIVER }}
-              SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}
-              SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
-              JWT_SECRET=${{ secrets.JWT_SECRET }}
-              PRODUCT_SERVICE_URL=${{ secrets.PRODUCT_SERVICE_URL }}
-              EOF
-              docker run -d -p 8080:8080 --name user-service --restart always \
-                --env-file /home/ec2-user/user-service.env \
-                ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: DB_URL,DB_DRIVER,DB_USERNAME,DB_PASSWORD,JWT_SECRET,AWS_REGION,AWS_ACCOUNT_ID,ECR_REPOSITORY
+          script: |
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+            docker pull ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+            docker stop user-service || true
+            docker rm user-service || true
+            cat > /home/ec2-user/user-service.env << EOF
+            SPRING_DATASOURCE_URL=${{ secrets.DB_URL }}
+            SPRING_DATASOURCE_DRIVER_CLASS_NAME=${{ secrets.DB_DRIVER }}
+            SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}
+            SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            PRODUCT_SERVICE_URL=${{ secrets.PRODUCT_SERVICE_URL }}
+            EOF
+            docker run -d -p 8080:8080 --name user-service --restart always \
+              --env-file /home/ec2-user/user-service.env \
+              ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
