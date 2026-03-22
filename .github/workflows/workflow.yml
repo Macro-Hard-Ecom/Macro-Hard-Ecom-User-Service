@@ -70,6 +70,8 @@ jobs:
             SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
             JWT_SECRET=${{ secrets.JWT_SECRET }}
             PRODUCT_SERVICE_URL=${{ secrets.PRODUCT_SERVICE_URL }}
+            ORDER_SERVICE_URL=${{ secrets.ORDER_SERVICE_URL }}
+            PAYMENT_SERVICE_URL=${{ secrets.PAYMENT_SERVICE_URL }}
             EOF
             docker run -d -p 8080:8080 --name user-service --restart always \
               --env-file /home/ec2-user/user-service.env \
