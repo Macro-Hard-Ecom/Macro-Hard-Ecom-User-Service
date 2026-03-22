@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -22,6 +24,12 @@ public class UserService {
 
     @Value("${product.service.url}")
     private String productServiceUrl;
+
+    @Value("${order.service.url}")
+    private String orderServiceUrl;
+
+    @Value("${payment.service.url}")
+    private String paymentServiceUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -67,6 +75,7 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // Get total listings from Product Service
         int totalListings = 0;
         try {
             String url = productServiceUrl + "/api/products/count/" + id;
@@ -78,13 +87,39 @@ public class UserService {
             totalListings = 0;
         }
 
+        // Get total orders from Order Service
+        int totalOrders = 0;
+        try {
+
+            String url = orderServiceUrl + "/api/orders/user/" + id + "/count";
+            Map response = restTemplate.getForObject(url, Map.class);
+            if (response != null && response.get("count") != null) {
+                totalOrders = Integer.parseInt(response.get("count").toString());
+            }
+        } catch (Exception e) {
+            totalOrders = 0;
+        }
+
+        // Get recent payments from Payment Service
+        List<Map> recentPayments = new ArrayList<>();
+        try {
+            String url = paymentServiceUrl + "/api/payments/user/" + id;
+            Map response = restTemplate.getForObject(url, Map.class);
+            if (response != null && response.get("payments") != null) {
+                recentPayments = (List<Map>) response.get("payments");
+            }
+        } catch (Exception e) {
+            recentPayments = new ArrayList<>();
+        }
+
         return new ProfileResponse(
                 user.getId(),
                 user.getName(),
                 user.getEmail(),
                 user.getRole(),
                 totalListings,
-                0
+                totalOrders,
+                recentPayments
         );
     }
 

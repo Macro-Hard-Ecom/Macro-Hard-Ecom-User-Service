@@ -62,26 +62,6 @@ public class UserController {
     public ResponseEntity<ProfileResponse> getUserProfile(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserProfile(id));
     }
-
-    @GetMapping("/users/{id}")
-    public ResponseEntity<User> getUser(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getUserById(id));
-    }
-    @PutMapping("/users/{id}")
-    public ResponseEntity<?> updateProfile(@PathVariable Long id, @Valid @RequestBody UpdateProfileRequest request) {
-        try {
-            return ResponseEntity.ok(userService.updateProfile(id, request));
-        } catch (RuntimeException e) {
-            if (e.getMessage().equals("User not found")) {
-                return ResponseEntity.status(404).body(Map.of("error", "User not found"));
-            }
-            if (e.getMessage().equals("Email already in use")) {
-                return ResponseEntity.status(409).body(Map.of("error", "Email already in use"));
-            }
-            return ResponseEntity.status(500).body(Map.of("error", "Failed to update profile"));
-        }
-    }
-
     @PutMapping("/users/{id}/change-password")
     public ResponseEntity<?> changePassword(@PathVariable Long id, @Valid @RequestBody ChangePasswordRequest request) {
         try {
@@ -103,6 +83,27 @@ public class UserController {
             return ResponseEntity.status(500).body(Map.of("error", "Failed to change password"));
         }
     }
+
+
+    @GetMapping("/users/{id}")
+    public ResponseEntity<User> getUser(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getUserById(id));
+    }
+    @PutMapping("/users/{id}")
+    public ResponseEntity<?> updateProfile(@PathVariable Long id, @Valid @RequestBody UpdateProfileRequest request) {
+        try {
+            return ResponseEntity.ok(userService.updateProfile(id, request));
+        } catch (RuntimeException e) {
+            if (e.getMessage().equals("User not found")) {
+                return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+            }
+            if (e.getMessage().equals("Email already in use")) {
+                return ResponseEntity.status(409).body(Map.of("error", "Email already in use"));
+            }
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to update profile"));
+        }
+    }
+
 
 
 }
