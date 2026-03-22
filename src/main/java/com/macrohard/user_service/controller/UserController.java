@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -21,13 +23,30 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/auth/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(userService.register(request));
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
+        try {
+            return ResponseEntity.ok(userService.register(request));
+        } catch (RuntimeException e) {
+            if (e.getMessage().equals("Email already registered")) {
+                return ResponseEntity.status(409).body(Map.of("error", "Email already registered"));
+            }
+            return ResponseEntity.status(500).body(Map.of("error", "Registration failed"));
+        }
     }
 
     @PostMapping("/auth/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(userService.login(request));
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        try {
+            return ResponseEntity.ok(userService.login(request));
+        } catch (RuntimeException e) {
+            if (e.getMessage().equals("User not found")) {
+                return ResponseEntity.status(401).body(Map.of("error", "Invalid email or password"));
+            }
+            if (e.getMessage().equals("Invalid password")) {
+                return ResponseEntity.status(401).body(Map.of("error", "Invalid email or password"));
+            }
+            return ResponseEntity.status(500).body(Map.of("error", "Login failed"));
+        }
     }
 
     @GetMapping("/users/{id}")
