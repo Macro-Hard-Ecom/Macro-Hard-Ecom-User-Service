@@ -3,6 +3,7 @@ package com.macrohard.user_service.controller;
 
 import com.macrohard.user_service.dto.AuthResponse;
 import com.macrohard.user_service.dto.LoginRequest;
+import com.macrohard.user_service.dto.ProfileResponse;
 import com.macrohard.user_service.dto.RegisterRequest;
 import com.macrohard.user_service.model.User;
 import com.macrohard.user_service.service.UserService;
@@ -42,6 +43,11 @@ public class UserController {
     @GetMapping("/health")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("User Service is running");
+    }
+
+    @GetMapping("/users/{id}/profile")
+    public ResponseEntity<ProfileResponse> getUserProfile(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getUserProfile(id));
     }
 
 }

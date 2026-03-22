@@ -1,5 +1,7 @@
 package com.macrohard.user_service.service;
-
+import com.macrohard.user_service.dto.ProfileResponse;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
 
 import com.macrohard.user_service.dto.AuthResponse;
 import com.macrohard.user_service.dto.LoginRequest;
@@ -19,6 +21,10 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    @Value("${product.service.url}")
+    private String productServiceUrl;
+
+    private final RestTemplate restTemplate = new RestTemplate();
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -34,7 +40,7 @@ public class UserService {
         userRepository.save(user);
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
-        return new AuthResponse(token, user.getEmail(), user.getName(), user.getRole());
+        return new AuthResponse(user.getId(), token, user.getEmail(), user.getName(), user.getRole());
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -46,7 +52,7 @@ public class UserService {
         }
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
-        return new AuthResponse(token, user.getEmail(), user.getName(), user.getRole());
+        return new AuthResponse(user.getId(), token, user.getEmail(), user.getName(), user.getRole());
     }
 
     public User getUserById(Long id) {
@@ -56,6 +62,29 @@ public class UserService {
 
     public boolean validateToken(String token) {
         return jwtUtil.isTokenValid(token);
+    }
+
+    public ProfileResponse getUserProfile(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        int totalListings = 0;
+        try {
+            String url = productServiceUrl + "/api/products/count/" + id;
+            Integer count = restTemplate.getForObject(url, Integer.class);
+            if (count != null) totalListings = count;
+        } catch (Exception e) {
+            // if product service is down, return 0
+            totalListings = 0;
+        }
+
+        return new ProfileResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getRole(),
+                totalListings
+        );
     }
 
 }
