@@ -1,11 +1,8 @@
 package com.macrohard.user_service.service;
-import com.macrohard.user_service.dto.ProfileResponse;
+import com.macrohard.user_service.dto.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.beans.factory.annotation.Value;
 
-import com.macrohard.user_service.dto.AuthResponse;
-import com.macrohard.user_service.dto.LoginRequest;
-import com.macrohard.user_service.dto.RegisterRequest;
 import com.macrohard.user_service.model.User;
 import com.macrohard.user_service.repository.UserRepository;
 import com.macrohard.user_service.security.JwtUtil;
@@ -91,4 +88,38 @@ public class UserService {
         );
     }
 
+
+    public User updateProfile(Long id, UpdateProfileRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!user.getEmail().equals(request.getEmail()) &&
+                userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already in use");
+        }
+
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        return userRepository.save(user);
+    }
+
+    public void changePassword(Long id, ChangePasswordRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new RuntimeException("New passwords do not match");
+        }
+
+        if (request.getNewPassword().length() < 6) {
+            throw new RuntimeException("New password must be at least 6 characters");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
 }
