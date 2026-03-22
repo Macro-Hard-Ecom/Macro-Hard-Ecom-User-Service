@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -71,10 +73,11 @@ public class UserService {
         int totalListings = 0;
         try {
             String url = productServiceUrl + "/api/products/count/" + id;
-            Integer count = restTemplate.getForObject(url, Integer.class);
-            if (count != null) totalListings = count;
+            Map response = restTemplate.getForObject(url, Map.class);
+            if (response != null && response.get("count") != null) {
+                totalListings = Integer.parseInt(response.get("count").toString());
+            }
         } catch (Exception e) {
-            // if product service is down, return 0
             totalListings = 0;
         }
 
@@ -83,7 +86,8 @@ public class UserService {
                 user.getName(),
                 user.getEmail(),
                 user.getRole(),
-                totalListings
+                totalListings,
+                0
         );
     }
 

@@ -11,4 +11,5 @@ public class ProfileResponse {
     private String email;
     private String role;
     private int totalListings;
+    private int totalOrders;
 }
