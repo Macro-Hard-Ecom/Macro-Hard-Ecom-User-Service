@@ -49,11 +49,6 @@ public class UserController {
         }
     }
 
-    @GetMapping("/users/{id}")
-    public ResponseEntity<User> getUser(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getUserById(id));
-    }
-
     @GetMapping("/auth/validateToken")
     public ResponseEntity<Boolean> validateToken(@RequestParam String token) {
         return ResponseEntity.ok(userService.validateToken(token));
@@ -64,10 +59,18 @@ public class UserController {
         return ResponseEntity.ok("User Service is running");
     }
 
+
+    //user routes
     @GetMapping("/users/{id}/profile")
     public ResponseEntity<ProfileResponse> getUserProfile(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserProfile(id));
     }
+
+    @GetMapping("/users/{id}")
+    public ResponseEntity<User> getUser(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getUserById(id));
+    }
+
 
 }
 
