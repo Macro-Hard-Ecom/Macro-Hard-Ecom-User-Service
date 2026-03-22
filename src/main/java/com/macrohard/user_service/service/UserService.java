@@ -123,7 +123,7 @@ public class UserService {
         );
     }
 
-
+//ignore
     public User updateProfile(Long id, UpdateProfileRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
